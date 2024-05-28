@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import enum
 import random
 import requests
@@ -132,105 +130,115 @@ def parse_map_data(map_data):
             print(attrs)
 
 
-def get_map_data(map_id):
-    url = f"https://www.google.com/maps/d/u/0/edit?mid={map_id}"
-    r = requests.get(url,cookies=cookies)
-    if b'Sign in' in r.content:
-        print("Please update cookie")
-        exit()
 
-    html_string = r.content.decode() 
-    dump_debug('get.html', html_string)
-
-    map_data = extract_map_data(html_string)
-    parse_map_data(map_data)
+def get_client():
+    cookies = get_cookies()
+    return MapsClient(cookies)
 
 
-def update(payload):
-    url = "https://www.google.com/maps/d/u/0/mutate?cid=mp&rt=j"
-    body = {
-        "f.req": json.dumps(payload),
-        "at": csrf_token
-    }
-    r = requests.post(url, data=body, cookies=cookies)
-    print(r.status_code)
+class MapsClient:
+    def __init__(self, cookies):
+        self.cookies = cookies
 
-    # The resulting json response will be malformed
-    response = '[' + r.content.decode().split('[', maxsplit=1)[1]
+    def update(self, payload):
+        url = "https://www.google.com/maps/d/u/0/mutate?cid=mp&rt=j"
+        body = {
+            "f.req": json.dumps(payload),
+            "at": csrf_token
+        }
+        r = requests.post(url, data=body, cookies=self.cookies)
+        print(r.status_code)
 
-    response = json.loads(response)
-    return response
+        # The resulting json response will be malformed
+        response = '[' + r.content.decode().split('[', maxsplit=1)[1]
+
+        response = json.loads(response)
+        return response
+
+    def get_map_data(self, map_id):
+        url = f"https://www.google.com/maps/d/u/0/edit?mid={map_id}"
+        r = requests.get(url,cookies=self.cookies)
+        if b'Sign in' in r.content:
+            print("Please update cookie")
+            exit()
+
+        html_string = r.content.decode() 
+        dump_debug('get.html', html_string)
+
+        map_data = extract_map_data(html_string)
+        parse_map_data(map_data)
 
 
-def create_point(map_id, layer_id, attrs=PointAttrs()):
-    # Generate a random hex string of length 16
-    point_id = hex(random.getrandbits(16 * 4))[2:].upper()
+    def create_point(self, map_id, layer_id, attrs=PointAttrs()):
+        # Generate a random hex string of length 16
+        point_id = hex(random.getrandbits(16 * 4))[2:].upper()
 
-    payload = [map_id] + [None] * 29 + [[
-        [map_id, [None, [[point_id, None, None, None, None, None, None, None, None, None, None, attrs.encode()]], None, layer_id]]
-    ]]
+        payload = [map_id] + [None] * 29 + [[
+            [map_id, [None, [[point_id, None, None, None, None, None, None, None, None, None, None, attrs.encode()]], None, layer_id]]
+        ]]
 
-    update(payload)
-    return point_id
+        self.update(payload)
+        return point_id
 
 
-def update_point(map_id, layer_id, point_id, attrs):
-    payload = [map_id] + [None] * 29 + [[
-        [map_id, None, None, None, [None, [[point_id, None, None, None, None, None, None, None, None, None, None, attrs.encode()]], None, layer_id]]
-    ]]
+    def update_point(self, map_id, layer_id, point_id, attrs):
+        payload = [map_id] + [None] * 29 + [[
+            [map_id, None, None, None, [None, [[point_id, None, None, None, None, None, None, None, None, None, None, attrs.encode()]], None, layer_id]]
+        ]]
 
-    update(payload)
+        self.update(payload)
 
-def delete_point(map_id, layer_id, point_id):
-    payload = [map_id] + [None] * 29 + [[
-        [map_id, None, [None, [point_id], layer_id]]
-    ]]
+    def delete_point(self, map_id, layer_id, point_id):
+        payload = [map_id] + [None] * 29 + [[
+            [map_id, None, [None, [point_id], layer_id]]
+        ]]
 
-    update(payload)
+        self.update(payload)
 
-def create_layer(map_id):
-    payload = [map_id] + [None] * 29 + [[
-        [map_id] + [None] * 8 + [[None, 1]]
-    ]]
+    def create_layer(self, map_id):
+        payload = [map_id] + [None] * 29 + [[
+            [map_id] + [None] * 8 + [[None, 1]]
+        ]]
 
-    response = update(payload)
-    layer_id = response[0][0][3][0][6][0][0]
-    return layer_id
+        response = self.update(payload)
+        layer_id = response[0][0][3][0][6][0][0]
+        return layer_id
 
-def update_layer(map_id, layer_id, layer_name):
-    payload = [map_id] + [None] * 29 + [[
-        [map_id] + [None] * 10 + [[layer_id, layer_name]]
-    ]]
+    def update_layer(self, map_id, layer_id, layer_name):
+        payload = [map_id] + [None] * 29 + [[
+            [map_id] + [None] * 10 + [[layer_id, layer_name]]
+        ]]
 
-    update(payload)
+        self.update(payload)
 
-def delete_layer(map_id, layer_id):
-    payload = [map_id] + [None] * 29 + [[
-        [map_id] + [None] * 9 + [[layer_id]]
-    ]]
+    def delete_layer(self, map_id, layer_id):
+        payload = [map_id] + [None] * 29 + [[
+            [map_id] + [None] * 9 + [[layer_id]]
+        ]]
 
-    update(payload)
+        self.update(payload)
 
 
 
 def main():
-    get_map_data(map_id)
+    map_id = '1XCtx-LuzBvM7z6KuKnzHluFx9mJBIY4'
+    client = get_client()
 
-    layer_id = create_layer(map_id)
-    update_layer(map_id, layer_id, layer_name='sup')
+    client.get_map_data(map_id)
 
-    point_id = create_point(map_id, layer_id)
+    layer_id = client.create_layer(map_id)
+    client.update_layer(map_id, layer_id, layer_name='sup')
+
+    point_id = client.create_point(map_id, layer_id)
     attrs = (PointAttrs()
         .add_attr(PointAttrType.NAME, str(datetime.now()))
         .add_attr(PointAttrType.COORD, [1.37, 103.75]))
-    update_point(map_id, layer_id, point_id, attrs)
+    client.update_point(map_id, layer_id, point_id, attrs)
 
-    delete_point(map_id, layer_id, point_id)
-    delete_layer(map_id, layer_id)
+    client.delete_point(map_id, layer_id, point_id)
+    client.delete_layer(map_id, layer_id)
 
 
 if __name__ == '__main__':
-    map_id = '1XCtx-LuzBvM7z6KuKnzHluFx9mJBIY4'
-    cookies = get_cookies()
     main()
 

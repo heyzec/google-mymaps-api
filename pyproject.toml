@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "mymaps"
+version = "0.1.0"
+description = "Reverse engineered APIs to interact with custom Google My Maps"
+authors = ["heyzec <61238538+heyzec@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.32.3"
+lxml = "^5.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

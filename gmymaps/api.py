@@ -1,10 +1,12 @@
-import enum
-import random
-import requests
-import json
-from lxml import html
-import base64
 from datetime import datetime
+import base64
+import enum
+import json
+import os
+import random
+
+from lxml import html
+import requests
 
 from .cookies import get_cookies
 
@@ -96,7 +98,6 @@ def extract_map_data(html_string):
     else:
         print("Script with _pageData not found!")
         return None
-        # exit()
 
     page_data_json = script.text.split('_pageData = ')[1][:-1]
     page_data = json.loads(page_data_json)
@@ -172,7 +173,6 @@ class MapsClient:
         if b'Sign in' in r.content:
             print("Please update cookie")
             return None
-            # exit()
 
         html_string = r.content.decode() 
         dump_debug('get.html', html_string)
@@ -234,18 +234,18 @@ class MapsClient:
 
 
 def main():
-    map_id = '1XCtx-LuzBvM7z6KuKnzHluFx9mJBIY4'
+    map_id = os.environ.get("MAP_ID") or input("Enter map id: ")
     client = get_client()
 
     client.get_map_data(map_id)
 
     layer_id = client.create_layer(map_id)
-    client.update_layer(map_id, layer_id, layer_name='sup')
+    client.update_layer(map_id, layer_id, layer_name='My test layer')
 
     point_id = client.create_point(map_id, layer_id)
     attrs = (PointAttrs()
-        .add_attr(PointAttrType.NAME, str(datetime.now()))
-        .add_attr(PointAttrType.DESCRIPTION, "sup")
+        .add_attr(PointAttrType.NAME, f"A point created at {datetime.now()}")
+        .add_attr(PointAttrType.DESCRIPTION, "My test point")
         .add_attr(PointAttrType.COORD, [1.37, 103.75]))
     client.update_point(map_id, layer_id, point_id, attrs)
 

@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "mymaps"
+name = "gmymaps"
 version = "0.1.0"
-description = "Reverse engineered APIs to interact with custom Google My Maps"
+description = "Reverse engineered APIs to interact with a Google My Maps map"
 authors = ["heyzec <61238538+heyzec@users.noreply.github.com>"]
 readme = "README.md"
 

@@ -1,19 +1,13 @@
-
-# How to handle browser or app may not be secure issue with web driver Selenium python?
-
 import re
 import json
 
 
 def parse_cookie_input(cookie_input):
-
-
     cookies = {}
     for key in ('SID', 'HSID', 'SSID', '__Secure-1PSIDTS'):
         if key not in cookie_input:
             print(f"{key} is missing")
             return None
-            exit()
 
         regex = rf'{key}=(?P<value>.+?)(?=[\s;])'
         match = re.search(regex, cookie_input)

@@ -12,6 +12,7 @@ def parse_cookie_input(cookie_input):
     for key in ('SID', 'HSID', 'SSID', '__Secure-1PSIDTS'):
         if key not in cookie_input:
             print(f"{key} is missing")
+            return None
             exit()
 
         regex = rf'{key}=(?P<value>.+?)(?=[\s;])'

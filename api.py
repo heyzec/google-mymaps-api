@@ -6,7 +6,7 @@ from lxml import html
 import base64
 from datetime import datetime
 
-from cookies import get_cookies
+from .cookies import get_cookies
 
 
 
@@ -17,6 +17,7 @@ def b64decode(s):
 
 
 def dump_debug(filename, s):
+    return
     with open(f'debug/{filename}', 'w') as f:
         f.write(s)
 
@@ -57,7 +58,7 @@ class PointAttrs:
                     attr[4] = attr_value
                     attr[9] = f"str:{b64encode(attr_type.value)}"
                 case PointAttrType.DESCRIPTION:
-                    attr[5] = attr_value
+                    attr[4] = attr_value
                     attr[9] = f"str:{b64encode(attr_type.value)}"
                 case PointAttrType.COORD:
                     attr[6] = [[attr_value]]
@@ -94,7 +95,8 @@ def extract_map_data(html_string):
             break
     else:
         print("Script with _pageData not found!")
-        exit()
+        return None
+        # exit()
 
     page_data_json = script.text.split('_pageData = ')[1][:-1]
     page_data = json.loads(page_data_json)
@@ -111,23 +113,32 @@ def extract_map_data(html_string):
 
 
 def parse_map_data(map_data):
-    title = map_data[0][1]
-    print(f"Map title {title}")
+    map_obj = {}
+    map_obj['title'] = map_data[0][1]
+    map_obj['layers'] = []
+
     layers = map_data[1]
     for layer in layers:
-        name = layer[1]
-        print(f"Layer {name}")
+        layer_obj = {}
+        map_obj['layers'].append(layer_obj)
+        layer_obj['id'] = layer[0]
+        layer_obj['name'] = layer[1]
+        layer_obj['points'] = []
 
         if len(layer) < 17:
-            print("no points")
             continue
 
         points = layer[17]
         for point in points:
+            point_obj = {}
+            layer_obj['points'].append(point_obj)
+
+            point_obj['id'] = point[0]
             point_data = point[11]
 
             attrs = PointAttrs.decode(point_data)
-            print(attrs)
+            point_obj['attrs'] = attrs
+    return map_obj
 
 
 
@@ -160,13 +171,15 @@ class MapsClient:
         r = requests.get(url,cookies=self.cookies)
         if b'Sign in' in r.content:
             print("Please update cookie")
-            exit()
+            return None
+            # exit()
 
         html_string = r.content.decode() 
         dump_debug('get.html', html_string)
 
         map_data = extract_map_data(html_string)
-        parse_map_data(map_data)
+        map_obj = parse_map_data(map_data)
+        return map_obj
 
 
     def create_point(self, map_id, layer_id, attrs=PointAttrs()):
@@ -232,6 +245,7 @@ def main():
     point_id = client.create_point(map_id, layer_id)
     attrs = (PointAttrs()
         .add_attr(PointAttrType.NAME, str(datetime.now()))
+        .add_attr(PointAttrType.DESCRIPTION, "sup")
         .add_attr(PointAttrType.COORD, [1.37, 103.75]))
     client.update_point(map_id, layer_id, point_id, attrs)
 

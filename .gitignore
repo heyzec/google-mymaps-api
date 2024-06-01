@@ -1,5 +1,13 @@
-__pycache__
-.direnv
+# Cache
+__pycache__/
 debug
+
+# Packaging
+dist/
+
+# Flakes
+.direnv/
+
+# Secrets
 cookies.json
 

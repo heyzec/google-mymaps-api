@@ -171,8 +171,10 @@ class MapsClient:
         url = f"https://www.google.com/maps/d/u/0/edit?mid={map_id}"
         r = requests.get(url,cookies=self.cookies)
         if b'Sign in' in r.content:
-            print("Please update cookie")
-            return None
+            raise Exception("This map is private, please sign in and then update cookies")
+
+        if b'This map was created by a user' in r.content:
+            raise Exception("Please sign in and then update cookies")
 
         html_string = r.content.decode() 
         dump_debug('get.html', html_string)

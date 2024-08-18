@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 requests = "^2.32.3"
 lxml = "^5.2.2"
+browser-cookie3 = "^0.19.1"
 
 
 [build-system]

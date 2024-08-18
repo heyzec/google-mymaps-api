@@ -9,5 +9,5 @@ dist/
 .direnv/
 
 # Secrets
-cookies.json
+cookies.txt
 

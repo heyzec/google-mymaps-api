@@ -1,44 +1,27 @@
-import re
-import json
+from http.cookiejar import MozillaCookieJar
+
+import browser_cookie3
 
 
-def parse_cookie_input(cookie_input):
-    cookies = {}
-    for key in ('SID', 'HSID', 'SSID', '__Secure-1PSIDTS'):
-        if key not in cookie_input:
-            print(f"{key} is missing")
-            return None
-
-        regex = rf'{key}=(?P<value>.+?)(?=[\s;])'
-        match = re.search(regex, cookie_input)
-
-        cookies[key] = match.group('value')
-
-    return cookies
+COOKIE_FILE = 'cookies.txt'
 
 def save_cookie_input():
-    print('Paste cookie here and press enter >')
+    key = input('Are you sure to extract Google cookies from your browser? [y/N] ')
+    if key.lower() != 'y':
+        exit()
 
-    n_newlines = 0
-    cookie_input = ""
-    while True:
-        line = input()
-        if line:
-            cookie_input += line
-        else:
-            n_newlines += 1
+    cj = browser_cookie3.load()
+    mcj = MozillaCookieJar(COOKIE_FILE)
+    for cookie in cj:
+        mcj.set_cookie(cookie)
+    mcj.save()
+    print(f"Cookies saved to {COOKIE_FILE}")
 
-        if n_newlines >= 2:
-            break
-
-    cookies = parse_cookie_input(cookie_input)
-    with open('cookies.json', 'w') as f:
-        json.dump(cookies, f)
 
 def get_cookies():
-    with open('cookies.json', 'r') as f:
-        cookies = json.load(f)
-    return cookies
+    cj = MozillaCookieJar(COOKIE_FILE)
+    cj.load()
+    return cj
 
 
 if __name__ == '__main__':
